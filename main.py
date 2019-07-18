@@ -2,7 +2,7 @@
 
 import os
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication,QFileDialog, QDialog, QLineEdit, QAction, qApp
+from PyQt5.QtWidgets import QMainWindow, QApplication,QFileDialog, QDialog, QLineEdit, QAction, qApp, QDesktopWidget
 from PyQt5.QtWidgets import  QInputDialog, QWidget, QVBoxLayout, QLabel, QMessageBox, QHBoxLayout, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap, QIcon, QPainter
 from PyQt5.QtCore import Qt, QSize
@@ -10,7 +10,6 @@ from PyQt5.QtCore import Qt, QSize
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setUI()
         self.image = ""
         self.imagesDirectory = ""
         self.dataDirectory = ""
@@ -20,6 +19,12 @@ class MainWindow(QMainWindow):
         self.pointCount = 0
         self.fileNameInput = None
         self.createFileDialog = None
+        self.menu = None
+        self.mainWidget = None
+        self.imageWidget = None
+        self.imageLayout = None
+        self.sideWidget = None
+        self.setUI()
 
     def setUI(self):
         importAction = QAction("Import Image", self)
@@ -42,18 +47,55 @@ class MainWindow(QMainWindow):
         drawPointsAction.setStatusTip("Draw edges points of object")
         drawPointsAction.triggered.connect(self.enablePointsDrawing)
 
-        menu = self.menuBar()
-        imageImport = menu.addMenu("Import image")
+        self.menu = self.menuBar()
+        imageImport = self.menu.addMenu("Import image")
         imageImport.addAction(importAction)
-        dataFile = menu.addMenu("Data File")
+        dataFile = self.menu.addMenu("Data File")
         dataFile.addAction(emptyDataFileAction)
         dataFile.addAction(conDataFileAction)
-        drawPoints = menu.addMenu("Drawing")
+        drawPoints = self.menu.addMenu("Drawing")
         drawPoints.addAction(drawPointsAction)
 
-        self.setGeometry(300, 300, 800, 500)
+        screen = QDesktopWidget().screenGeometry(-1)
+        self.setGeometry(0, 0, screen.width() , screen.height())
         self.setWindowTitle("Magic Image Annotator")
+
+        self.mainWidget = QWidget(self)
+        self.mainWidget.setObjectName("main-widget")
+        self.mainWidget.setFixedSize(screen.width(), screen.height())
+        self.mainWidget.move(0, self.menu.height()-6)
+        self.mainWidget.setContentsMargins(0, 0, 0, 0)
+
+        hLayout = QHBoxLayout(self.mainWidget)
+        hLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.imageWidget = QWidget()
+        self.imageWidget.setObjectName("image-widget")
+        self.imageWidget.setFixedSize(0.8*screen.width()-1, screen.height())
+        self.imageWidget.move(0, self.menu.height())
+        self.imageWidget.setContentsMargins(0, 0, 0, 0)
+        self.imageLayout = QVBoxLayout(self.imageWidget)
+
+        self.sideWidget = QWidget()
+        self.sideWidget.setObjectName("side-widget")
+        self.sideWidget.setFixedSize(0.2*screen.width()-1, screen.height())
+        self.sideWidget.setContentsMargins(0, 0, 0, 0)
+        sideLayout = QVBoxLayout(self.sideWidget)
+
+        hLayout.addWidget(self.imageWidget)
+        hLayout.addWidget(self.sideWidget)
+
+        self.resizeEvent = self.resize
         self.show()
+
+    def resize(self, event):
+        if self.mainWidget and self.imageWidget and self.sideWidget:
+            print("there")
+            w = event.size().width()
+            h = event.size().height()
+            self.mainWidget.setFixedSize(w,h)
+            self.imageWidget.setFixedSize(0.8*w-1, h)
+            self.sideWidget.setFixedSize(0.2*w-1, h)
 
     def importImage(self):
         options = QFileDialog.Options()
@@ -62,16 +104,13 @@ class MainWindow(QMainWindow):
         if self.image != "":
             self.statusBar().showMessage("Processing image %s"%self.image)
             self.imagesDirectory = "/".join(self.image.split("/")[:-1])
-            self.centralWidget = QWidget()
-            self.setCentralWidget(self.centralWidget)
-            lay = QVBoxLayout(self.centralWidget)
             self.imageLabel = QLabel(self)
             pixmap = QPixmap(self.image)
             self.imageLabel.setPixmap(pixmap)
             self.imageLabel.setAlignment(Qt.AlignCenter)
             if self.width() < pixmap.width() or self.height() < pixmap.height():
                 self.resize(pixmap.width(), pixmap.height())
-            lay.addWidget(self.imageLabel)
+            self.imageLayout.addWidget(self.imageLabel)
 
     def createDataFileWin(self):
         dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -158,7 +197,6 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
     # Read and set style
     with open("app.css") as f:
         app.setStyleSheet(f.read())

@@ -1,5 +1,17 @@
+QWidget#main-widget {
+  background-color:#212121;
+}
+
+QWidget#image-widget {
+  background-color:#333333;
+}
+
+QWidget#side-widget {
+  background-color:#333333;
+}
+
 QPushButton {
-  background-color:#6fa3f7;
+  background-color: #6fa3f7;
   color: black;
   border: 1px solid #407df7;
   border-radius: 4px;
@@ -8,4 +20,25 @@ QPushButton {
 
 QPushButton:hover {
   background-color: white;
+}
+
+QMenuBar {
+  background-color: #212121;
+  border: 1px solid black;
+  color: white;
+}
+
+QMenuBar::item:selected {
+  color: #6fa3f7;
+}
+
+QMenu {
+  background-color: #212121;
+  border: 1px solid #1c1c1c;
+  border-radius: 4px;
+  color: white;
+}
+
+QMenu::item:selected {
+  color: #6fa3f7;
 }
