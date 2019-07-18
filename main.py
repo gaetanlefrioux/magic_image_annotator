@@ -1,5 +1,9 @@
+#!/usr/bin/python3
+
+import os
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication,QFileDialog, QAction, qApp, QInputDialog, QWidget, QVBoxLayout, QLabel, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication,QFileDialog, QDialog, QLineEdit, QAction, qApp
+from PyQt5.QtWidgets import  QInputDialog, QWidget, QVBoxLayout, QLabel, QMessageBox, QHBoxLayout, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap, QIcon, QPainter
 from PyQt5.QtCore import Qt, QSize
 
@@ -14,6 +18,8 @@ class MainWindow(QMainWindow):
         self.dataFileObject = None
         self.imageLabel = None
         self.pointCount = 0
+        self.fileNameInput = None
+        self.createFileDialog = None
 
     def setUI(self):
         importAction = QAction("Import Image", self)
@@ -21,10 +27,15 @@ class MainWindow(QMainWindow):
         importAction.setStatusTip("Import an image")
         importAction.triggered.connect(self.importImage)
 
-        dataFileAction = QAction("Data file", self)
-        dataFileAction.setShortcut("Ctrl+D")
-        dataFileAction.setStatusTip("Connect to a data file")
-        dataFileAction.triggered.connect(self.connectToDataFile)
+        conDataFileAction = QAction("Connect data file", self)
+        conDataFileAction.setShortcut("Ctrl+D")
+        conDataFileAction.setStatusTip("Connect to a data file")
+        conDataFileAction.triggered.connect(self.connectToDataFile)
+
+        emptyDataFileAction = QAction("Create empty data file", self)
+        emptyDataFileAction.setShortcut("Ctrl+E")
+        emptyDataFileAction.setStatusTip("Create an empty data file")
+        emptyDataFileAction.triggered.connect(self.createDataFileWin)
 
         drawPointsAction = QAction(QIcon("./drawPointsIcon.jpeg"), "Draw points", self)
         drawPointsAction.setShortcut("Ctrl+P")
@@ -35,7 +46,8 @@ class MainWindow(QMainWindow):
         imageImport = menu.addMenu("Import image")
         imageImport.addAction(importAction)
         dataFile = menu.addMenu("Data File")
-        dataFile.addAction(dataFileAction)
+        dataFile.addAction(emptyDataFileAction)
+        dataFile.addAction(conDataFileAction)
         drawPoints = menu.addMenu("Drawing")
         drawPoints.addAction(drawPointsAction)
 
@@ -60,6 +72,55 @@ class MainWindow(QMainWindow):
             if self.width() < pixmap.width() or self.height() < pixmap.height():
                 self.resize(pixmap.width(), pixmap.height())
             lay.addWidget(self.imageLabel)
+
+    def createDataFileWin(self):
+        dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        if dir != "":
+            self.dataDirectory = dir
+            dialog = QDialog(self)
+            dialog.setWindowTitle("New data file options")
+
+            vbox = QVBoxLayout()
+
+            filehbox = QHBoxLayout()
+            fileLabel = QLabel("File name:")
+            fileLabel.setMargin(20)
+            fileInput = QLineEdit()
+            self.fileNameInput = fileInput
+            filehbox.addWidget(fileLabel)
+            filehbox.addWidget(fileInput)
+            vbox.addLayout(filehbox)
+
+            createButton = QPushButton("Create")
+            createButton.clicked.connect(self.createDataFile)
+            vbox.addWidget(createButton)
+            dialog.setLayout(vbox)
+            self.createFileDialog = dialog
+            dialog.exec_()
+
+    def createDataFile(self):
+        if self.fileNameInput.text() == "":
+            QMessageBox.about(self,
+            "Impossible action",
+            "You must enter a file name"
+            )
+        else:
+            files = os.listdir(self.dataDirectory)
+            fileName = self.fileNameInput.text()
+            print(files)
+            if fileName in files:
+                QMessageBox.about(self,
+                "Impossible action",
+                "This file name already exist"
+                )
+                self.createDataFileWin()
+            else:
+                self.dataFile = "%s/%s"%(self.dataDirectory, fileName)
+                print(self.dataFile)
+                self.dataFileObject = open(self.dataFile, "w+")
+                self.dataFileObject.write("imageFile, type, x1, y1, x2, y2")
+                self.statusBar().showMessage("New data file %s created"%self.dataFile)
+            self.createFileDialog.close()
 
     def connectToDataFile(self):
         options = QFileDialog.Options()
@@ -97,5 +158,10 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # Read and set style
+    with open("app.css") as f:
+        app.setStyleSheet(f.read())
+
     window = MainWindow()
     sys.exit(app.exec_())
