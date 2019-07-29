@@ -2,14 +2,8 @@ QWidget#main-widget {
   background-color:#212121;
 }
 
-QWidget#image-widget {
-  background-color:#333333;
-  border-right: 1px solid black;
-}
-
 QWidget#side-widget {
   background-color:#333333;
-  border-left: 1px solid black;
 }
 
 QStatusBar {

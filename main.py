@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+from ImageWidget import ImageWidget
 import os
 import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication,QFileDialog, QDialog, QLineEdit, QAction, qApp, QDesktopWidget
 from PyQt5.QtWidgets import  QInputDialog, QWidget, QVBoxLayout, QLabel, QMessageBox, QHBoxLayout, QVBoxLayout, QPushButton
-from PyQt5.QtGui import QPixmap, QIcon, QPainter
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen, QColor
 from PyQt5.QtCore import Qt, QSize
 
 class MainWindow(QMainWindow):
@@ -25,9 +26,10 @@ class MainWindow(QMainWindow):
         self.imageWidget = None
         self.imageLayout = None
         self.sideWidget = None
-        self.setUI()
+        self.painter = None
+        self.initUI()
 
-    def setUI(self):
+    def initUI(self):
         importAction = QAction("Import Image", self)
         importAction.setShortcut("Ctrl+I")
         importAction.setStatusTip("Import an image")
@@ -43,10 +45,9 @@ class MainWindow(QMainWindow):
         emptyDataFileAction.setStatusTip("Create an empty data file")
         emptyDataFileAction.triggered.connect(self.createDataFileWin)
 
-        drawPointsAction = QAction(QIcon("./drawPointsIcon.jpeg"), "Draw points", self)
+        drawPointsAction = QAction(QIcon("./drawRectangleIcon.png"), "Draw rectangle", self)
         drawPointsAction.setShortcut("Ctrl+P")
         drawPointsAction.setStatusTip("Draw edges points of object")
-        drawPointsAction.triggered.connect(self.enablePointsDrawing)
 
         self.menu = self.menuBar()
         imageImport = self.menu.addMenu("Import image")
@@ -70,14 +71,12 @@ class MainWindow(QMainWindow):
         hLayout = QHBoxLayout(self.mainWidget)
         hLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.imageWidget = QWidget()
+        self.imageWidget = ImageWidget(QColor(51, 51, 51), self)
         self.imageWidget.setObjectName("image-widget")
         self.imageWidget.setFixedSize(0.8*screen.width()-1, screen.height())
         self.imageWidget.move(0, self.menu.height())
         self.imageWidget.setContentsMargins(0, 0, 0, 0)
-        self.imageLayout = QVBoxLayout(self.imageWidget)
-        self.imageLabel = QLabel(self)
-        self.imageLayout.addWidget(self.imageLabel)
+        drawPointsAction.triggered.connect(self.imageWidget.enablePointsDrawing)
 
         self.sideWidget = QWidget()
         self.sideWidget.setObjectName("side-widget")
@@ -105,11 +104,7 @@ class MainWindow(QMainWindow):
         self.image, _ = QFileDialog.getOpenFileName(self,"Image selection", self.imagesDirectory,"Images (*.png *.jpeg *.jpg)", options=options)
         if self.image != "":
             self.statusBar().showMessage("Processing image %s"%self.image)
-            self.imagesDirectory = "/".join(self.image.split("/")[:-1])
-            pixmap = QPixmap(self.image)
-            self.imageLabel.setPixmap(pixmap)
-            self.imageLabel.setAlignment(Qt.AlignCenter)
-            self.imageCount += 1
+            self.imageWidget.setImage(self.image)
 
     def createDataFileWin(self):
         dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -156,9 +151,9 @@ class MainWindow(QMainWindow):
                 self.dataFile = "%s/%s"%(self.dataDirectory, fileName)
                 print(self.dataFile)
                 self.dataFileObject = open(self.dataFile, "w+")
-                self.dataFileObject.write("imageFile, type, x1, y1, x2, y2")
+                self.dataFileObject.write("imageFile, type, x, y, w, h")
                 self.statusBar().showMessage("New data file %s created"%self.dataFile)
-            self.createFileDialog.close()
+        self.createFileDialog.close()
 
     def connectToDataFile(self):
         options = QFileDialog.Options()
@@ -172,30 +167,6 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Writing to file %s"%self.dataFile)
             self.dataDirectory = "/".join(self.dataFile.split("/")[:-1])
             self.dataFileObject = open(self.dataFile, "w+")
-
-    def enablePointsDrawing(self):
-        if self.image == "":
-            QMessageBox.about(self,
-                "Enable to draw points",
-                "You must import an image to be able to draw points"
-            )
-        else:
-            self.statusBar().showMessage("Points drawing enable")
-            self.imageLabel.mousePressEvent = self.drawPoint
-
-    # Position isn't correct
-    # point drawing isn't working
-    def drawPoint(self, event):
-        self.pointCount += 1
-        x = event.pos().x()
-        y = event.pos().y()
-        print(x, y)
-        qp = QPainter()
-        qp.begin(self)
-        qp.setPen(Qt.red)
-        qp.drawPoint(x, y)
-        if self.pointCount == 2:
-            print(2)
 
 
 if __name__ == "__main__":
