@@ -4,10 +4,18 @@ QWidget#main-widget {
 
 QWidget#image-widget {
   background-color:#333333;
+  border-right: 1px solid black;
 }
 
 QWidget#side-widget {
   background-color:#333333;
+  border-left: 1px solid black;
+}
+
+QStatusBar {
+  border-top: 1px solid black;
+  background-color: #212121;
+  color: white;
 }
 
 QPushButton {
@@ -23,8 +31,8 @@ QPushButton:hover {
 }
 
 QMenuBar {
-  background-color: #212121;
   border: 1px solid black;
+  background-color: #212121;
   color: white;
 }
 

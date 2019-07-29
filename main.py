@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
         self.dataFile = ""
         self.dataFileObject = None
         self.imageLabel = None
+        self.imageCount = 0
         self.pointCount = 0
         self.fileNameInput = None
         self.createFileDialog = None
@@ -75,6 +76,8 @@ class MainWindow(QMainWindow):
         self.imageWidget.move(0, self.menu.height())
         self.imageWidget.setContentsMargins(0, 0, 0, 0)
         self.imageLayout = QVBoxLayout(self.imageWidget)
+        self.imageLabel = QLabel(self)
+        self.imageLayout.addWidget(self.imageLabel)
 
         self.sideWidget = QWidget()
         self.sideWidget.setObjectName("side-widget")
@@ -85,12 +88,11 @@ class MainWindow(QMainWindow):
         hLayout.addWidget(self.imageWidget)
         hLayout.addWidget(self.sideWidget)
 
-        self.resizeEvent = self.resize
+        self.resizeEvent = self.resizer
         self.show()
 
-    def resize(self, event):
+    def resizer(self, event):
         if self.mainWidget and self.imageWidget and self.sideWidget:
-            print("there")
             w = event.size().width()
             h = event.size().height()
             self.mainWidget.setFixedSize(w,h)
@@ -104,13 +106,10 @@ class MainWindow(QMainWindow):
         if self.image != "":
             self.statusBar().showMessage("Processing image %s"%self.image)
             self.imagesDirectory = "/".join(self.image.split("/")[:-1])
-            self.imageLabel = QLabel(self)
             pixmap = QPixmap(self.image)
             self.imageLabel.setPixmap(pixmap)
             self.imageLabel.setAlignment(Qt.AlignCenter)
-            if self.width() < pixmap.width() or self.height() < pixmap.height():
-                self.resize(pixmap.width(), pixmap.height())
-            self.imageLayout.addWidget(self.imageLabel)
+            self.imageCount += 1
 
     def createDataFileWin(self):
         dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -164,7 +163,11 @@ class MainWindow(QMainWindow):
     def connectToDataFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        self.dataFile, _ = QFileDialog.getOpenFileName(self,"Data file selection", self.dataDirectory,"CSV (*.csv)", options=options)
+        self.dataFile, _ = QFileDialog.getOpenFileName(
+            self,"Data file selection",
+            self.dataDirectory,"CSV (*.csv)",
+            options=options
+        )
         if self.dataFile != "":
             self.statusBar().showMessage("Writing to file %s"%self.dataFile)
             self.dataDirectory = "/".join(self.dataFile.split("/")[:-1])
@@ -173,8 +176,8 @@ class MainWindow(QMainWindow):
     def enablePointsDrawing(self):
         if self.image == "":
             QMessageBox.about(self,
-            "Enable to draw points",
-            "You must import an image to be able to draw points"
+                "Enable to draw points",
+                "You must import an image to be able to draw points"
             )
         else:
             self.statusBar().showMessage("Points drawing enable")
